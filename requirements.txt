@@ -1,0 +1,21 @@
+# Django 6.0+ project requirements
+django>=6.0
+django-ninja>=1.0
+
+# Database
+psycopg[binary]>=3.2
+dj-database-url>=2.0
+
+# Environment
+python-dotenv>=1.0
+
+# ASGI server
+uvicorn[standard]>=0.34
+
+# AI/LLM
+langchain>=0.3
+langchain-openai>=0.3
+httpx>=0.28
+
+# Utilities
+pydantic>=2.0

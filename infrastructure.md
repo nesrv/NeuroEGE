@@ -482,7 +482,93 @@ async def submit_attempt(request, data: AttemptSchema):
 
 ---
 
-## 9. Deployment на ваш VPS
+## 9. Локальная разработка (Windows)
+
+### Установка PostgreSQL на Windows
+
+```powershell
+# Вариант 1: winget (рекомендую)
+winget install PostgreSQL.PostgreSQL
+
+# Вариант 2: Scoop
+scoop install postgresql
+
+# Вариант 3: Официальный установщик
+# https://www.postgresql.org/download/windows/
+```
+
+После установки PostgreSQL работает как Windows Service (автозапуск).
+
+### Создание БД для разработки
+
+```powershell
+# Открыть PowerShell и выполнить:
+psql -U postgres
+
+# В psql:
+CREATE DATABASE neuroege;
+CREATE USER neuroege WITH PASSWORD 'dev_password';
+GRANT ALL PRIVILEGES ON DATABASE neuroege TO neuroege;
+ALTER DATABASE neuroege OWNER TO neuroege;
+\q
+```
+
+### Переменные окружения (.env)
+
+```ini
+# .env (локальная разработка)
+DATABASE_URL=postgres://neuroege:dev_password@localhost:5432/neuroege
+DEEPSEEK_API_KEY=sk-xxx
+SECRET_KEY=dev-secret-key-change-in-prod
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
+```
+
+### Запуск проекта
+
+```powershell
+# 1. Клонируем
+git clone https://github.com/your/neuroege.git
+cd neuroege
+
+# 2. Виртуальное окружение (Python 3.12+)
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+# 3. Зависимости
+pip install -r requirements.txt
+
+# 4. Миграции
+python manage.py migrate
+
+# 5. Запуск dev-сервера
+python manage.py runserver
+
+# Или с ASGI (ближе к проду):
+uvicorn config.asgi:application --reload
+```
+
+### Версии PostgreSQL: dev vs prod
+
+| Среда | PostgreSQL | Особенности |
+|-------|------------|-------------|
+| Windows (dev) | 16/17 | Стабильные, без io_uring |
+| Ubuntu (prod) | **18** | io_uring (+50% I/O) |
+
+Разница для Django несущественна — миграции совместимы. На проде просто быстрее.
+
+### pgAdmin (GUI для Windows)
+
+```powershell
+# Устанавливается вместе с PostgreSQL или отдельно:
+winget install PostgreSQL.pgAdmin
+```
+
+Удобно для просмотра данных, отладки запросов.
+
+---
+
+## 10. Deployment на VPS (Ubuntu)
 
 ### Быстрый старт
 
@@ -616,15 +702,28 @@ echo "0 3 * * * /opt/neuroege/backup.sh" | crontab -
 
 ---
 
-## 10. Roadmap инфраструктуры 2026 (ваш VPS)
+## 11. Roadmap инфраструктуры 2026 (ваш VPS)
+
+### Почему сразу PostgreSQL (не SQLite)
+
+| Проблема SQLite | Решение PostgreSQL 18 |
+|-----------------|----------------------|
+| Write lock на всю БД | Concurrent writes |
+| Async ORM ограничен | Полная поддержка Django 6.0 async |
+| Миграция данных потом | Не нужна |
+| Нет io_uring | +50% I/O производительности |
+
+При 5,000 учениках и ~1-2 writes/sec SQLite создаст bottleneck. PostgreSQL настраивается за 15 минут.
+
+### Этапы
 
 | Этап | Users | Архитектура | Доп. затраты |
 |------|-------|-------------|--------------|
-| **MVP** | 100 | VPS + SQLite + Qwen3 (free) | **0 ₽** |
-| **Alpha** | 500 | VPS + PostgreSQL + Qwen3/DeepSeek | **~300 ₽** |
-| **Beta** | 2,000 | VPS + PostgreSQL + DeepSeek | **~1,500 ₽** |
-| **Год 1** | 5,000 | VPS + PostgreSQL + DeepSeek/Gemini | **~2,500 ₽** |
-| **Год 2** | 20,000 | VPS (апгрейд) + PG + Tiered LLM | **~10,000 ₽** |
+| **MVP** | 100 | VPS + PostgreSQL 18 + Qwen3 (free) | **0 ₽** |
+| **Alpha** | 500 | VPS + PostgreSQL 18 + DeepSeek | **~300 ₽** |
+| **Beta** | 2,000 | VPS + PostgreSQL 18 + DeepSeek | **~1,500 ₽** |
+| **Год 1** | 5,000 | VPS + PostgreSQL 18 + DeepSeek/Gemini | **~2,500 ₽** |
+| **Год 2** | 20,000 | VPS (апгрейд 8GB) + PG + Tiered LLM | **~10,000 ₽** |
 
 ### Когда апгрейдить VPS
 
@@ -643,7 +742,7 @@ Hostiman тарифы (примерно):
 
 ---
 
-## 11. Сравнение: было vs стало (с вашим VPS)
+## 12. Сравнение: было vs стало (с вашим VPS)
 
 | Аспект | Архитектура 2024 | **Ваша архитектура 2026** |
 |--------|------------------|---------------------------|
@@ -659,7 +758,7 @@ Hostiman тарифы (примерно):
 
 ---
 
-## 12. Риски и митигации
+## 13. Риски и митигации
 
 | Риск | Митигация 2026 |
 |------|----------------|
@@ -671,7 +770,7 @@ Hostiman тарифы (примерно):
 
 ---
 
-## 13. Quick Start (для разработки)
+## 14. Quick Start
 
 ```bash
 # 1. Клонируем и настраиваем
