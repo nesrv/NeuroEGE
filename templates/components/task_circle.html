@@ -1,0 +1,21 @@
+{% load static %}
+{# Компонент: круг с номером задания и иконками. Переменные: number, has_python, has_excel, has_word, has_brain #}
+<a href="#" class="task-circle">
+  <span class="task-circle__number">{{ number }}</span>
+  {% if has_python or has_excel or has_word or has_brain %}
+    <span class="task-circle__icons">
+      {% if has_python %}
+        <img src="{% static 'images/py.svg' %}" alt="Python" class="task-circle__icon" width="20" height="20">
+      {% endif %}
+      {% if has_excel %}
+        <img src="{% static 'images/excel.svg' %}" alt="Excel" class="task-circle__icon" width="20" height="20">
+      {% endif %}
+      {% if has_word %}
+        <img src="{% static 'images/word.svg' %}" alt="Word" class="task-circle__icon" width="20" height="20">
+      {% endif %}
+      {% if has_brain %}
+        <img src="{% static 'images/brain.svg' %}" alt="Мозг" class="task-circle__icon" width="20" height="20">
+      {% endif %}
+    </span>
+  {% endif %}
+</a>

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}NeuroEGE — Готовься к ЕГЭ на 90+{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+  {% include "components/canvas_bg.html" %}
+
+  <div class="page">
+    {% include "components/header.html" %}
+
+    <main class="main">
+      {% include "components/hero.html" %}
+      {% include "components/task_grid.html" %}
+    </main>
+
+    {% include "components/footer.html" %}
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'js/matrix_canvas.js' %}"></script>
+{% endblock %}

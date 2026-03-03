@@ -1,0 +1,5 @@
+<section class="task-grid">
+  {% for task in tasks %}
+    {% include "components/task_circle.html" with number=task.number has_python=task.has_python has_excel=task.has_excel has_word=task.has_word has_brain=task.has_brain %}
+  {% endfor %}
+</section>

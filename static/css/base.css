@@ -1,0 +1,45 @@
+/**
+ * Base styles — переменные, сброс, типографика
+ * NeuroEGE — AI-тренажёр ЕГЭ по информатике
+ */
+
+:root {
+  --bg: #23282d;
+  --white: #ffffff;
+  --green: #05b87d;
+  --text-muted: rgba(255, 255, 255, 0.6);
+  --text-footer: rgba(255, 255, 255, 0.5);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg);
+  color: var(--white);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
