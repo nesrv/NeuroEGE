@@ -25,37 +25,41 @@ wsl
 Далее все команды выполняются внутри WSL Ubuntu:
 
 ```bash
-# 3. Установить зависимости системы
+# 3. Установить PostgreSQL
 sudo apt update
-sudo apt install python3.13 python3.13-venv postgresql
+sudo apt install postgresql
 
-# 4. Склонировать проект (внутри WSL, НЕ на /mnt/c/)
+# 4. Установить uv (управляет Python + зависимостями)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+source ~/.bashrc  # или перезапустить терминал
+
+# 5. Склонировать проект (внутри WSL, НЕ на /mnt/c/)
 cd ~
 cp -r /mnt/c/W26/project/NeuroEGE ~/NeuroEGE
 cd ~/NeuroEGE
 
-# 5. Установить uv + зависимости
-pip install uv
-uv venv
+# 6. Python 3.13 + venv + зависимости (uv сделает всё сам)
+uv python install 3.13
+uv venv --python 3.13
 source .venv/bin/activate
 uv pip install -r requirements.txt
 
-# 6. PostgreSQL
+# 7. Создать БД PostgreSQL
 sudo -u postgres psql -c "CREATE DATABASE neuroege;"
 sudo -u postgres psql -c "CREATE USER neuroege WITH PASSWORD 'password';"
 sudo -u postgres psql -c "GRANT ALL ON DATABASE neuroege TO neuroege;"
 
-# 7. Переменные окружения
+# 8. Переменные окружения
 cp .env.example .env
 # nano .env  # отредактировать
 
-# 8. Миграции
+# 9. Миграции
 python manage.py migrate
 
-# 9. Суперпользователь
+# 10. Суперпользователь
 python manage.py createsuperuser
 
-# 10. Запуск
+# 11. Запуск
 python manage.py runserver
 # или ASGI:
 uvicorn config.asgi:application --reload
@@ -66,6 +70,54 @@ uvicorn config.asgi:application --reload
 ```powershell
 # Открыть проект в WSL из Windows:
 code --remote wsl+Ubuntu-24.04 ~/NeuroEGE
+```
+
+### Синхронизация Windows → WSL
+
+При редактировании в Windows (`c:\W26\project\NeuroEGE`) и запуске в WSL (`~/NeuroEGE`):
+
+Создайте `~/NeuroEGE/sync-from-win.sh`:
+
+```bash
+#!/bin/bash
+SRC="/mnt/c/W26/project/NeuroEGE"
+DST="$HOME/NeuroEGE"
+rsync -av --exclude '.venv' --exclude '__pycache__' --exclude '*.pyc' --exclude '.env' "$SRC/" "$DST/"
+echo "Synced at $(date)"
+```
+
+```bash
+# Первый раз: конвертировать line endings (CRLF → LF)
+sed -i 's/\r$//' /mnt/c/W26/project/NeuroEGE/sync-from-win.sh
+
+chmod +x ~/NeuroEGE/sync-from-win.sh
+~/NeuroEGE/sync-from-win.sh   # или: bash /mnt/c/W26/project/NeuroEGE/sync-from-win.sh
+```
+
+**Из PowerShell (без входа в WSL):**
+
+```powershell
+wsl -e bash -c "sed -i 's/\r$//' /mnt/c/W26/project/NeuroEGE/sync-from-win.sh"
+wsl -e bash -c "/mnt/c/W26/project/NeuroEGE/sync-from-win.sh"
+```
+
+### Ежедневная работа в WSL
+
+```bash
+cd ~/NeuroEGE
+
+# 1. Синхронизировать изменения из Cursor (Windows)
+./sync-from-win.sh
+
+# 2. Активировать окружение
+source .venv/bin/activate
+
+# 3. При необходимости — обновить зависимости и миграции
+uv pip install -r requirements.txt
+python manage.py migrate
+
+# 4. Запустить сервер
+python manage.py runserver
 ```
 
 ## Структура
@@ -98,10 +150,37 @@ NeuroEGE/
 
 - `/admin/` — Django Admin
 - `/api/v1/docs` — Swagger документация
-- `/api/v1/users/me` — Текущий пользователь
-- `/api/v1/attempts/` — Попытки
-- `/api/v1/tasks/truth-table/` — Задания №2
-- `/api/v1/tasks/code-exec/` — Задания №24-27
+
+### Аутентификация (JWT)
+
+```bash
+# Регистрация
+curl -X POST http://localhost:8000/api/v1/users/register \
+  -H "Content-Type: application/json" \
+  -d '{"username": "student", "email": "student@test.ru", "password": "pass123"}'
+
+# Ответ: {"access_token": "eyJ...", "token_type": "bearer"}
+
+# Вход
+curl -X POST http://localhost:8000/api/v1/users/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "student", "password": "pass123"}'
+
+# Использование токена
+curl http://localhost:8000/api/v1/users/me \
+  -H "Authorization: Bearer eyJ..."
+```
+
+### Endpoints
+
+| Endpoint | Auth | Описание |
+|----------|------|----------|
+| `POST /api/v1/users/register` | ❌ | Регистрация |
+| `POST /api/v1/users/login` | ❌ | Вход |
+| `GET /api/v1/users/me` | ✅ JWT | Текущий пользователь |
+| `GET /api/v1/attempts/` | ✅ JWT | Попытки |
+| `GET /api/v1/tasks/truth-table/` | ❌ | Задания №2 |
+| `GET /api/v1/tasks/code-exec/` | ❌ | Задания №24-27 |
 
 ## Sandbox (выполнение кода)
 
